@@ -12,6 +12,7 @@ app.use(express.static(`${__dirname}/game`));
 var server = http.createServer(app);
 const wss = new websocket.Server({ server });
 
+var currentRooms = {}
 
 app.use("/", function (req, res) {
 
@@ -33,6 +34,35 @@ wss.on("connection", function connection(ws) {
     con.on("message", function incoming(message) {
         console.log(`${new Date().toString().substring(0, 24)}\tMESSAGE:\t${message}`);
         let messageJSON = JSON.parse(message);
+
+        if (messageJSON.gameID) {
+            // if the room already exists
+            if (currentRooms[messageJSON.gameID]) {
+
+            }
+            // if the room doesn't exits yet
+            else {
+                currentRooms[messageJSON.gameID] = { players: [] };
+            }
+            let contains = false;
+            currentRooms[messageJSON.gameID].players.forEach(p => {
+                if (p.ID == con.id) {
+                    contains = true;
+                }
+            });
+            if (!contains) {
+                currentRooms[messageJSON.gameID].players.push({ "ID": con.id, "nickname": messageJSON.nickname, "ws": con });
+            }
+            delete contains;
+
+            currentRooms[messageJSON.gameID].players.forEach(p => {
+                if (p.ID != messageJSON.playerID) {
+                    console.log("hi")
+                    p.ws.send(JSON.stringify({ "yeet": "yeet" }));
+                }
+            });
+            console.log(currentRooms[messageJSON.gameID].players)
+        }
 
 
     });
